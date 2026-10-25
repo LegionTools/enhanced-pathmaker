@@ -1,0 +1,30 @@
+## Interface: 120007, 120100, 16001
+## Title: PathMaker
+## Notes: Record, generate and navigate.
+## Author: Spaxt3
+## Version: 2.0.6
+## SavedVariables: PathmakerDB
+## X-Flavor: Retail, WoW Forever
+
+# Core
+Core\Compat.lua
+Core\Localization.lua
+Core\PathMaker.lua
+
+# Interface
+UI\MapFrame.lua
+
+# Features
+Modules\Routes.lua
+Modules\Navigation.lua
+Modules\Debug.lua
+UI\UI.lua
+Modules\Planner.lua
+Modules\ImportExport.lua
+Modules\Heatmap.lua
+Modules\Profiles.lua
+
+# Configuration
+UI\Options.lua
+UI\Settings.lua
+Tools\RetailMapCapture.lua
