@@ -151,10 +151,11 @@ function addon:InjectNode(zoneID, coord, nodeType, nodeID)
     table.insert(PathmakerDB.nodes[mapID], {
         x = x,
         y = y,
-        id = trueName, 
+        id = trueName,
         type = nodeType,
         name = nodeName,
         source = "PathMaker_Nodes",
+        verified = false,
     })
 end
 

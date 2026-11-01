@@ -1611,6 +1611,7 @@ local function ImportExternalNodeTables(PMNodes, nodeFilter)
             specificName = nodeName,
             icon = addon.NODE_ICONS and addon.NODE_ICONS[nodeName],
             source = "PathMaker_Nodes",
+            verified = false,
         }
         table.insert(PathmakerDB.nodes[mapID], importedNode)
         IndexImportNode(index, mapID, nodeName, importedNode)

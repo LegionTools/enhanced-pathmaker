@@ -662,9 +662,28 @@ end
 -- ----------------------------------------------------------------------------
 -- DB INITIALIZATION & MIGRATION
 -- ----------------------------------------------------------------------------
+-- One-time backfill so pre-existing saves get a verified/unverified flag:
+-- nodes the player has actually gathered before ("learned") are trustworthy,
+-- everything else (bundled "PathMaker_Nodes" imports) is not yet confirmed
+-- to exist on this server.
+local function MigrateVerifiedFlags()
+    if PathmakerDB.verifiedMigrationDone then return end
+    if PathmakerDB.nodes then
+        for _, nodes in pairs(PathmakerDB.nodes) do
+            for _, node in ipairs(nodes) do
+                if node.verified == nil then
+                    node.verified = (node.source == "learned")
+                end
+            end
+        end
+    end
+    PathmakerDB.verifiedMigrationDone = true
+end
+
 function addon.Heatmap:InitDB()
     if not PathmakerDB then PathmakerDB = {} end
     if not PathmakerDB.nodes then PathmakerDB.nodes = {} end
+    MigrateVerifiedFlags()
 end
 
 local function FixDatabaseIcons()
@@ -1152,6 +1171,7 @@ local function RecordNode(nodeType, specificName)
         nearestNode.time = gatheredAt
         nearestNode.gatherCount = (tonumber(nearestNode.gatherCount) or 0) + 1
         nearestNode.source = "learned"
+        nearestNode.verified = true
         addon.Heatmap:InvalidateVisibleNodeCache()
         addon.Heatmap:RefreshWorldMap()
         return
@@ -1168,6 +1188,7 @@ local function RecordNode(nodeType, specificName)
         lastGathered = gatheredAt,
         gatherCount = 1,
         source = "learned",
+        verified = true,
     })
     addon.Heatmap:InvalidateVisibleNodeCache()
     
