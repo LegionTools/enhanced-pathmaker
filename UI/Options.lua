@@ -1372,6 +1372,7 @@ function addon.Options:BuildImportedNodeRoutes(nodeFilter, maxNodeTypes, targetM
     generationOptions = generationOptions or {}
     local routeStyle = generationOptions.routeStyle == "SHORTEST" and "SHORTEST" or "BALANCED"
     local nodeDensity = generationOptions.nodeDensity == "DETAILED" and "DETAILED" or "NORMAL"
+    local verifiedOnly = generationOptions.verifiedOnly == true
     local selectedNames = {}
     local selectedLookup = {}
     for nodeName, enabled in pairs(nodeFilter or {}) do
@@ -1389,7 +1390,7 @@ function addon.Options:BuildImportedNodeRoutes(nodeFilter, maxNodeTypes, targetM
             local professionByNode = {}
             for _, node in ipairs(nodes) do
                 local nodeName = node.specificName or node.name or node.type
-                if selectedLookup[nodeName] and node.x and node.y then
+                if selectedLookup[nodeName] and node.x and node.y and (not verifiedOnly or node.verified == true) then
                     local profession = GetNodeProfession(nodeName)
                     local icon, color, label = GetNodeVisual(profession)
                     node.profession = label
@@ -2278,6 +2279,7 @@ local function CreateOptionsPanel()
     local drawRouteMode = (PathmakerDB and PathmakerDB.settings and PathmakerDB.settings.drawRouteMode) == "FULL" and "FULL" or "HALF"
     local generatorSettings = EnsureOptionsSettings()
     local avoidAreaMode = generatorSettings.avoidAreaMode == "IGNORE" and "IGNORE" or "RESPECT"
+    local verifiedOnlyFilter = generatorSettings.verifiedOnly == true
     local drawSelectedContinentID = nil
     local drawSelectedZoneID = nil
     local drawDropdowns = {}
@@ -2430,6 +2432,26 @@ local function CreateOptionsPanel()
     end
     UpdateAvoidAreaRow()
 
+    local verifiedOnlyCheck = CreateFrame("CheckButton", nil, DrawPanel, "UICheckButtonTemplate")
+    verifiedOnlyCheck:SetSize(20, 20)
+    verifiedOnlyCheck:SetPoint("TOPLEFT", 360, -49)
+    verifiedOnlyCheck.text = verifiedOnlyCheck:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    verifiedOnlyCheck.text:SetPoint("LEFT", verifiedOnlyCheck, "RIGHT", 2, 0)
+    verifiedOnlyCheck.text:SetText(T("Verified Nodes Only"))
+    verifiedOnlyCheck:SetHitRectInsets(0, -140, 0, 0)
+    verifiedOnlyCheck:SetChecked(verifiedOnlyFilter)
+    verifiedOnlyCheck:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(T("Verified Nodes Only"))
+        GameTooltip:AddLine(T("Only use nodes you have actually gathered on this server. Bundled/imported nodes that have not been confirmed yet are left out of generated routes."), 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    verifiedOnlyCheck:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    verifiedOnlyCheck:SetScript("OnClick", function(self)
+        verifiedOnlyFilter = self:GetChecked() and true or false
+        PathmakerDB.settings.verifiedOnly = verifiedOnlyFilter
+    end)
+
     local drawMapText = DrawPanel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     drawMapText:SetPoint("TOPLEFT", 16, -78)
     drawMapText:SetText("Imported Nodes")
@@ -2558,6 +2580,7 @@ local function CreateOptionsPanel()
         if selectedCount > MAX_DRAW_ROUTE_NODE_TYPES then if not hideErr then print(string.format("|cFFFF4444PathMaker:|r Select %d or fewer node types at once.", MAX_DRAW_ROUTE_NODE_TYPES)) end return end
         local builtRoutes, skippedTooFew = addon.Options:BuildImportedNodeRoutes(selected, MAX_DRAW_ROUTE_NODE_TYPES, GetDrawScopeMapTarget(), drawRouteMode, {
             avoidAreaMode=avoidAreaMode,
+            verifiedOnly=verifiedOnlyFilter,
         })
         local hideRouteMsg = PathmakerDB and PathmakerDB.settings and PathmakerDB.settings.disableMsgGeneratedRoutes
         if builtRoutes > 0 and not hideRouteMsg then print(string.format("|cFF00FF00PathMaker:|r Generated %d route(s) from selected imported nodes.", builtRoutes)) elseif builtRoutes == 0 and not hideErr then print("|cFFFF4444PathMaker:|r Not enough imported points for the selected node type(s).") end
